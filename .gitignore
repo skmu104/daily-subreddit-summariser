@@ -1,0 +1,8 @@
+artifacts/
+*.mp3
+*.ipynb
+test_project_env/
+
+.vscode/
+
+.env

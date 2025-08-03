@@ -20,8 +20,6 @@ load_dotenv()
 async def scrape_subreddit(subreddit_name: str, limit=100) -> pd.DataFrame:
     client_id = os.environ.get("PRAW_CLIENT_ID")
     client_secret = os.environ.get("PRAW_CLIENT_SECRET")
-    print(f"Client Id: {client_id}")
-    print(f"Client Secret: {client_secret}")
     if not client_id or not client_secret:
         print("WARNING: PRAW client credentials not set. Ensure environment variables PRAW_CLIENT_ID and PRAW_CLIENT_SECRET")
         sys.exit(1)
@@ -63,6 +61,7 @@ async def get_posts() -> pd.DataFrame:
     return shortened_df
 
 def create_documents_from_reddit_data(posts: pd.DataFrame) -> list[Document]:
+    print("Converting reddit data into documents")
     documents = []
     for _, post in posts.iterrows():
         if post['is_highlight']:
@@ -74,6 +73,7 @@ def create_documents_from_reddit_data(posts: pd.DataFrame) -> list[Document]:
     return documents
 
 async def summarise_posts(documents: list[Document]) -> str:
+    print("Summarising posts")
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite")
     map_chain, reduce_chain = create_map_reduce_chain(llm=llm)
     mr = MapReduce(llm, map_chain, reduce_chain)
@@ -111,7 +111,9 @@ Summary:
 async def create_audio(text: str) -> str:
     print("Converting summary to audio file")
     client = AsyncOpenAI()
-    speech_file_path = Path(__file__).parent /  "artifacts/Daily Summary.mp3"
+    speech_file_path = Path(__file__).parent /  "artifacts/DailySummary.mp3"
+    speech_file_path.parent.mkdir(parents=True, exist_ok=True)
+
     async with client.audio.speech.with_streaming_response.create(
         model="gpt-4o-mini-tts",
         voice="ballad",
@@ -124,7 +126,6 @@ async def create_audio(text: str) -> str:
 
 async def main():
     posts = await get_posts()
-    print("Analysing and summarising subreddit data")
     documents = create_documents_from_reddit_data(posts)
     summary = await summarise_posts(documents)
     audio_file_path = await create_audio(summary)

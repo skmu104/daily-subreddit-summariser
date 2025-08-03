@@ -1,6 +1,7 @@
 FROM python:3.9-slim-buster
 
 WORKDIR /usr/local/app
+RUN mkdir /artifacts
 
 # Create a non-root user to run the application                                                                                                                     │
 RUN addgroup --system app && adduser --system --group app 
